@@ -2,28 +2,25 @@ import streamlit as st
 
 st.title("Dashboard")
 
-st.markdown(
-    """
-    <style>
-    /* Target Streamlit buttons to scale them down to text height */
-    div.stButton > button {
-        padding: 2px 10px !important;
-        font-size: 14px !important;
-        line-height: 1.2 !important;
-        min-height: 0px !important;
-        height: auto !important;
-        border-radius: 4px !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
+if "button_disabled" not in st.session_state:
+    st.session_state.button_disabled = False
+
+
+# Callback function to handle the click
+def disable_button():
+    st.session_state.button_disabled = True
+
+
+# Render the button with the disabled state and callback
+st.button(
+    "Click Me to Disable",
+    disabled=st.session_state.button_disabled,
+    on_click=disable_button,
 )
 
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.write("This is a standard line of text right next to a small button ->")
-
-with col2:
-    if st.button("Click me"):
-        st.write("Button clicked!")
+# Optional: Add a button to reset the state
+if st.session_state.button_disabled:
+    st.success("Button has been pressed and disabled!")
+    if st.button("Reset"):
+        st.session_state.button_disabled = False
+        st.rerun()

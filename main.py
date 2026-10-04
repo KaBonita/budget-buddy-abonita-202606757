@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 import csv
 import os
 
@@ -25,6 +26,16 @@ def read_csv_row(filename, target_row_num):
                 return row
     return None
 
+def safe_replace(temp_file, filename, retries=5, delay=0.2):
+    for i in range(retries):
+        try:
+            os.replace(temp_file, filename)
+            return
+        except PermissionError:
+            if i == retries - 1:
+                raise
+            time.sleep(delay)
+
 def replace_csv_row(filename, row_index, new_row):
     row_index -= 1
     with open(filename, "r", newline="", encoding="utf-8") as file:
@@ -42,7 +53,7 @@ def replace_csv_row(filename, row_index, new_row):
         writer = csv.writer(file)
         writer.writerows(rows)
 
-    os.replace(temp_file, filename)
+    safe_replace(temp_file, filename)
 
 def len_csv(filename):
     with open(filename, "r", newline="") as file:
