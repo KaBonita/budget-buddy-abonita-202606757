@@ -1,15 +1,16 @@
-from data_loader import load_budget_data
-from main import load_month_budget, replace_csv_row, read_csv_row, len_csv
+from data_loader import load_budget_data, save_budget_data
+from main import load_month_budget
 import streamlit as st
 import datetime
 import time
 
-def replace_income_val(month_year, income_category, new_income, BUDGET_FILENAME = "budget_data.csv"):
-    for index in range(1, len_csv(BUDGET_FILENAME) + 1):
-        row = read_csv_row(BUDGET_FILENAME, index)
-        if row[0] == month_year and row[1] == income_category:
-            row[2] = new_income
-            replace_csv_row(BUDGET_FILENAME, index, row)
+def replace_income_values(month_year, income_category, new_value):
+    budget_data = load_budget_data()
+    for line in budget_data:
+        if line["month"] == month_year and line["income_source"] == income_category:
+            line["income"] = new_value
+
+    save_budget_data(budget_data)
 
 curr_month = datetime.datetime.now().month
 curr_year = datetime.datetime.now().year
@@ -48,26 +49,14 @@ with income_source_col:
 
 with income_col:
     for income_source in income_sources:
-        income_source[1] = st.number_input(None, value = income_source[1], step = 100.0, key = income_source, format = "Php")
-
-
-if "is_processing" not in st.session_state:
-    st.session_state.is_processing = False
-def start_processing():
-    st.session_state.is_processing = True
+        income_source[1] = st.number_input(None, value = income_source[1], step = 100.0, key = income_source)
 
 if income_sources:
-    if not st.session_state.is_processing:
-        st.button("Save Changes", on_click=start_processing)
-    else:
-        st.info("Saving changes, please wait...")
+    if st.button("Save Changes"):
         for income_source in income_sources:
-            replace_income_val(month_year, income_source[0], income_source[1])
-        time.sleep(1)
-        st.session_state.is_processing = False
+            replace_income_values(month_year, income_source[0], income_source[1])
         st.rerun()
 
 st.divider()
-
 st.write(month_budget_data)
 st.write(income_sources)
