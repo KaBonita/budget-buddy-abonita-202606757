@@ -12,25 +12,16 @@ def replace_income_values(month_year, income_category, new_value):
 
     save_budget_data(budget_data)
 
-st.markdown(
-    """
-    <style>
-    /* Add subtle border under each row to look like a table */
-    div[data-testid="column"] {
-        display: flex;
-        align-items: center;
-    }
-    .table-row {
-        padding: 8px 0px;
-        border-bottom: 1px solid rgba(49, 51, 63, 0.2);
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+def replace_budget_entry(replace_item, with_item):
+    budget_data = load_budget_data()
+    index = budget_data.index(replace_item)
+    budget_data[index] = with_item
+
+    save_budget_data(budget_data)
 
 curr_month = datetime.datetime.now().month
 curr_year = datetime.datetime.now().year
+
 
 #Ask month and year
 st.header("Manage budget for")
@@ -47,6 +38,7 @@ st.divider()
 month_year = month + " " + year
 
 month_budget_data = load_month_budget(month_year)
+
 
 income_sources = []
 for line in month_budget_data:
@@ -76,35 +68,103 @@ if income_sources:
 
 st.divider()
 
-table_data = [ [dictionary["category"], dictionary["income_source"], dictionary["planned_amount"]] for dictionary in month_budget_data 
-]
+
+#Whole table + editing
+
+table_data = [[dictionary["category"], dictionary["income_source"], dictionary["planned_amount"]] for dictionary in month_budget_data ]
+
+if "editing_index" not in st.session_state:
+    st.session_state.editing_index = None
+
+if "adding_entry" not in st.session_state:
+    st.session_state.adding_entry = False
+
+income_options = [isrc[0] if isinstance(isrc, (list, tuple)) else isrc for isrc in income_sources]
+if st.session_state.editing_index is not None:
+    st.session_state.adding_entry = False
+    idx = st.session_state.editing_index
+    current_item = month_budget_data[idx]
+
+    st.subheader(f"Editing Budget Entry")
+    edit_category = st.text_input("Edit Category", value=current_item["category"])
+
+    current_source = current_item["income_source"]
+    source_index = (income_options.index(current_source)
+        if current_source in income_options
+        else 0)
+    edit_income_source = st.selectbox(
+        "Edit Income Source", options=income_options, index=source_index,
+        accept_new_options= True)
+
+    edit_planned_amount = st.number_input(
+        "Edit Planned Amount",
+        value=float(current_item["planned_amount"]),
+        step=100.0,)
+    col_save, col_cancel = st.columns([1, 1])
+
+    with col_save:
+        if st.button("Save Changes", use_container_width=True):
+            new_item = month_budget_data[idx].copy()
+            new_item["category"] = edit_category
+            new_item["income_source"] = edit_income_source
+            new_item["planned_amount"] = edit_planned_amount
+            for income_source in income_sources:
+                if new_item["income_source"] == income_source[0]:
+                    new_item["income"] = income_source[1]
+
+            replace_budget_entry(month_budget_data[idx], new_item)
 
 
-col_ratios = [2, 2, 2, 1]
-header_cols = st.columns(col_ratios)
-for col, header in zip(header_cols, ["Category", "Income Source", "Planned Amount", "Actions"]):
-    col.markdown(f"**{header}**")
-for index, row in enumerate(table_data):
-    cols = st.columns(col_ratios)
-
-    cols[0].write(row[0])
-    cols[1].write(row[1])
-    cols[2].write(row[2])
-
-    if cols[3].button("Edit", key = row):
-
-        new_category = cols[0].text_input("Edit Category", value = row[0], on_change = "ignore")
-        new_income_source = cols[1].selectbox("Edit Income Source", 
-                          (income_source[0] for income_source in income_sources),
-                          index = [income_source[0] for income_source in income_sources].index(row[1]),
-                          on_change = "ignore")
-        new_planned_amount = cols[2].number_input("Edit Planned Amount", value = row[2],
-                           on_change = "ignore", step = 100.0)
-        if cols[3].button("Save"):
-            month_budget_data[index]["category"] = new_category
-            month_budget_data[index]["income_source"] = new_income_source
-            month_budget_data[index]["planned_amount"] = new_planned_amount
+            st.session_state.editing_index = None
             st.rerun()
-        
+    with col_cancel:
+        if st.button("Cancel", use_container_width=True):
+            st.session_state.editing_index = None
+            st.rerun()
+
+else:
+    table_data = [[d["category"], d["income_source"], d["planned_amount"]]
+        for d in month_budget_data]
+    col_ratios = [2, 2, 2, 1]
+    header_cols = st.columns(col_ratios)
+    for col, header in zip(
+        header_cols, ["Category", "Income Source", "Planned Amount", "Actions"]):
+        col.markdown(f"**{header}**")
+    for index, row in enumerate(table_data):
+        cols = st.columns(col_ratios)
+        cols[0].write(row[0])
+        cols[1].write(row[1])
+        cols[2].write(row[2])
+        if cols[3].button("Edit", key=f"edit_btn_{index}"):
+            st.session_state.editing_index = index
+            st.rerun()
+
+
+if st.session_state.adding_entry and st.session_state.editing_index == None:
+    st.divider()
+    st.subheader("Add New Budget Entry")
+
+    add_category = st.text_input("New Category", placeholder="e.g., Side Hustle")
+    add_income_source = st.selectbox("Income Source", options=income_options)
+    add_planned_amount = st.number_input("Planned Amount", value=0.0, step=100.0)
+
+    col_add_confirm, col_add_cancel = st.columns([1, 1])
+
+    if col_add_confirm.button("Add Entry", use_container_width=True):
+        st.session_state.adding_entry = False
+        st.rerun()
+
+    if col_add_cancel.button("Cancel Add", use_container_width=True):
+        st.session_state.adding_entry = False
+        st.rerun()
+
+else:
+    if st.session_state.editing_index is None:
+        if st.button("Add Entry", use_container_width=True):
+            st.session_state.adding_entry = True
+            st.rerun()
+
+st.divider()
+
 st.write(month_budget_data)
 st.write(income_sources)
