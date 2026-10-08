@@ -1,8 +1,16 @@
 from data_loader import load_budget_data, save_budget_data
-from main import load_month_budget
+from main import load_month_budget, ask_month_year
 import streamlit as st
 import datetime
 import time
+
+def get_budget_table_data(month_budget_data):
+    budget_table_data = [[line["category"], 
+                          line["income_source"], 
+                          line["planned_amount"]] 
+                          for line in month_budget_data ]
+
+    return budget_table_data
 
 def replace_income_values(month_year, income_category, new_value):
     budget_data = load_budget_data()
@@ -35,26 +43,13 @@ def new_budget_entry(new_value):
 
     save_budget_data(budget_data)
 
-
-curr_month = datetime.datetime.now().month
-curr_year = datetime.datetime.now().year
-
-
 #Ask month and year
-st.header("Manage budget for")
-month_col, year_col = st.columns(2)
-with month_col:
-    month = st.selectbox("", ("January", "February",
-                        "March", "April", "May", "June", "July", "August",
-                        "September", "October", "November", "December"),
-                        index = curr_month - 1)
-with year_col:
-    year = str(st.selectbox("", (tuple(range(1, 10000))),
-                             index = curr_year - 1))
-st.divider()
-month_year = month + " " + year
 
+st.header("Manage budget for")
+month_year = ask_month_year()
 month_budget_data = load_month_budget(month_year)
+
+st.divider()
 
 
 #income sources section
@@ -91,7 +86,7 @@ st.divider()
 
 #Whole table + editing
 
-table_data = [[dictionary["category"], dictionary["income_source"], dictionary["planned_amount"]] for dictionary in month_budget_data ]
+table_data = get_budget_table_data(month_budget_data)
 
 if "editing_index" not in st.session_state:
     st.session_state.editing_index = None
@@ -141,7 +136,7 @@ if st.session_state.editing_index is not None:
             st.session_state.editing_index = None
             st.rerun()
     with col_cancel:
-        if st.button("Remove Budget Entry", width = "stretch", type = "primary" ):
+        if st.button("Remove Budget Category", width = "stretch", type = "primary" ):
             replace_budget_entry(month_budget_data[idx], None)
             st.session_state.editing_index = None
             st.rerun()
@@ -169,9 +164,9 @@ else:
 
 if st.session_state.adding_entry and st.session_state.editing_index == None:
     st.divider()
-    st.subheader("Add New Budget Entry")
+    st.subheader("Add New Budget Category")
 
-    add_category = st.text_input("New Category", placeholder="e.g., Transportation")
+    add_category = st.text_input("Category Name", placeholder="e.g., Transportation")
     add_income_source = st.selectbox("Income Source", options = income_options, accept_new_options=True)
     add_planned_amount = st.number_input("Planned Amount", value=100.0, step=100.0)
     add_income = 100.0
@@ -197,7 +192,7 @@ if st.session_state.adding_entry and st.session_state.editing_index == None:
 
 else:
     if st.session_state.editing_index is None:
-        if st.button("Add Entry", width = "stretch"):
+        if st.button("Add Category", width = "stretch"):
             st.session_state.adding_entry = True
             st.rerun()
 
@@ -218,6 +213,6 @@ with total_planned_col:
     st.caption(f"Total Planned: ₱{total_planned}")
 
 if total_planned > total_income:
-    st.warning(f"Warning: Your planned total exceeds your total income by ₱{total_planned - total_income}. Either increase your total income or reduce your total planned to fix this.")
+    st.warning(f"Warning: Your planned total exceeds your total income by ₱{total_planned - total_income}. Either increase your total income or reduce your total planned amount to fix this.")
 elif total_income > total_planned:
     st.info(f"Tip: You still have ₱{total_income - total_planned} to allocate into your budget!")
