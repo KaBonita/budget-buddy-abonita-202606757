@@ -52,3 +52,4 @@ expenses = st.Page("expense_page.py", title = "Expenses")
 if __name__ == "__main__":
     curr_page = st.navigation([dashboard, budget, expenses])
     curr_page.run()
+    

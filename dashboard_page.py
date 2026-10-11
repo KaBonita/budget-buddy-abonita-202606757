@@ -88,14 +88,18 @@ actual_amounts = get_actual_spent(month_year)
 
 if categories:
 
+    st.subheader("Visualizations")
+
     col1, col2 = st.columns(2)
     with col1:
+        st.write("")
         # Create Matplotlib Figure & Axes
         fig_pie, ax_pie = plot.subplots(figsize=(5, 4))
         ax_pie.pie(planned_amounts, 
             labels=categories,
             autopct="%1.1f%%",)
         ax_pie.axis("equal")
+        plot.title("Budget buckets overall budget share")
         
         st.pyplot(fig_pie)
     
@@ -109,10 +113,13 @@ if categories:
         ax_bar.bar(x_indices + bar_width / 2, actual_amounts, bar_width, label="Actual", color="#DD8452")
         
         ax_bar.set_ylabel("Amount ($)")
+        ax_bar.set_xlabel("Budget Bucket")
         ax_bar.set_xticks(x_indices)
         ax_bar.set_xticklabels(categories, rotation=45, ha="right")
         ax_bar.legend()
         plot.tight_layout()
+
+        plot.title("Planned vs Actual Spending")
         
         st.pyplot(fig_bar)
 
@@ -120,7 +127,7 @@ if categories:
 
     st.divider()
 
-    st.subheader("Monthly Budget Breakdown")
+    st.subheader("Category Breakdown")
     st.write("")
     col_ratios = [2, 1.5, 1.5, 1.5, 3]
     header_cols = st.columns(col_ratios)
@@ -136,6 +143,8 @@ if categories:
         if row[3] < 0:
             cols[4].warning(f"OVER BUDGET by ₱{abs(row[3])}")
         else:
-            cols[4].info("On track")
+            cols[4].success("On track")
 
     st.divider()
+else:
+    st.info("No data yet to show. Get started by establishing your budget buckets in the budget tab!")

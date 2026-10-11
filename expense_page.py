@@ -24,19 +24,19 @@ def check_item_validity(date, month_year, category, description, amount):
     input_year = int(date[0:4])
 
     if (month_number, year) != (input_month, input_year):
-        st.warning(f"{date} is not within {month_year}. Change your inputted date to match that of your selected month range then try again.")
+        st.error(f"{date} is not within {month_year}. Change your inputted date to match that of your selected month range then try again.")
         return False
     elif not category:
-        st.warning(f"Your category cannot be empty. Select a category then try again. If there are no categories, you must first set up your budget categories for {month_year} in the budget panel.")
+        st.error(f"Your category cannot be empty. Select a category then try again. If there are no categories, you must first set up your budget categories for {month_year} in the budget panel.")
         return False
     elif not description:
-        st.warning("Your description is empty. Write something in the log description then try again.")
+        st.error("Your description is empty. Write something in the log description then try again.")
         return False
     elif amount == 0:
-        st.warning("The value of the expense cannot be 0. Please try again.")
+        st.error("The value of the expense cannot be 0. Please try again.")
         return False
     elif amount < 0:
-        st.warning("The value of the expense cannot be negative. Please try again.")
+        st.error("The value of the expense cannot be negative. Please try again.")
     else:
         return True
 
@@ -66,20 +66,6 @@ def get_total_spent(month_year):
 
     return total_expenses
 
-def get_actual_spent(month_year):
-    budget_categories = get_budget_categories(month_year)
-    month_expenses = load_month_expenses(month_year)
-    actual_spent = []
-    for budget_category in budget_categories:
-        actual_spending = 0
-        for line in month_expenses:
-            if line["category"] == budget_category:
-                actual_spending += line["amount"]
-
-        actual_spent.append(actual_spending)
-
-    return actual_spent
-
 if __name__ == "__main__":
         
     st.header("Manage expenses for:")
@@ -89,18 +75,10 @@ if __name__ == "__main__":
 
     table_data = get_expense_table_data(month_expenses)
 
-    if "editing_index" not in st.session_state:
-        st.session_state.editing_index = None
-
     if "adding_entry" not in st.session_state:
         st.session_state.adding_entry = False
 
-    if st.session_state.editing_index is not None:
-        st.session_state.adding_entry = False
-        idx = st.session_state.editing_index
-        current_item = month_expenses[idx]
-
-    else:
+    if table_data:
         st.subheader(f"{month_year} Expense Log:")
         st.write("")
         col_ratios = [1.5, 2, 3, 2]
@@ -114,6 +92,8 @@ if __name__ == "__main__":
             cols[1].write(row[1])
             cols[2].caption(row[2])
             cols[3].write(row[3])
+    else:
+        st.info(f"You currently have no logged expenses for {month_year}. Log one?")
 
     if st.session_state.adding_entry:
         st.divider()
@@ -149,4 +129,3 @@ if __name__ == "__main__":
                 st.session_state.adding_entry = True
                 st.rerun()
 
-    st.divider()
