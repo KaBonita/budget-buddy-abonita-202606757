@@ -2,7 +2,7 @@ import streamlit as st
 import datetime
 from data_loader import load_expense_data, save_expense_data
 from budget_page import get_budget_categories
-from main import ask_month_year, load_month_expenses, load_month_budget
+from main import ask_month_year, load_month_expenses, load_month_budget, help_button
 
 def get_expense_table_data(month_expenses):
     expense_table_data = [[line["date"],
@@ -91,7 +91,8 @@ if __name__ == "__main__":
             cols[0].write(row[0])
             cols[1].write(row[1])
             cols[2].caption(row[2])
-            cols[3].write(row[3])
+            cols[3].write(f"₱{str(row[3])}")
+        st.divider()
     else:
         st.info(f"You currently have no logged expenses for {month_year}. Log one?")
 
@@ -113,13 +114,13 @@ if __name__ == "__main__":
 
         col_add_confirm, col_add_cancel = st.columns([1, 1])
 
-        if col_add_confirm.button("Add Entry", width = "stretch"):
+        if col_add_confirm.button("Log Expense", width = "stretch"):
             if check_item_validity(expense_date, month_year, category, description, amount):
                 new_expense_entry(new_log)
                 st.session_state.adding_entry = False
                 st.rerun()
 
-        if col_add_cancel.button("Cancel Add", width = "stretch"):
+        if col_add_cancel.button("Cancel", width = "stretch"):
             st.session_state.adding_entry = False
             st.rerun()
 
@@ -129,3 +130,5 @@ if __name__ == "__main__":
                 st.session_state.adding_entry = True
                 st.rerun()
 
+    placeholder, col_help = st.columns([10, 1])
+    help_button("expense_log", col_help)

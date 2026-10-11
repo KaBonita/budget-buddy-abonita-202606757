@@ -1,5 +1,5 @@
 from data_loader import load_budget_data, save_budget_data
-from main import load_month_budget, ask_month_year
+from main import load_month_budget, ask_month_year, help_button
 import streamlit as st
 import datetime
 
@@ -219,7 +219,8 @@ if __name__ == "__main__":
         
         income_sources = get_income_sources(month_year)
 
-        st.subheader("Income Sources")
+        st.subheader("Income")
+        st.write("")
         income_source_col, income_col = st.columns(2)
         with income_source_col:
             st.markdown("**Income Source**")
@@ -235,12 +236,15 @@ if __name__ == "__main__":
             for income_source in income_sources:
                 income_source[1] = st.number_input(None, value = income_source[1], step = 100.0, key = income_source)
 
-        if income_sources:
-            if st.button("Save Changes", key = "Save_Income"):
-                for income_source in income_sources:
-                    replace_income_values(month_year, income_source[0], income_source[1])
-                st.rerun()
-
+        st.write("")
+        col_save, col_help = st.columns([10, 1])
+        with col_save:
+            if income_sources:
+                if st.button("Save Changes", key = "Save_Income"):
+                    for income_source in income_sources:
+                        replace_income_values(month_year, income_source[0], income_source[1])
+                    st.rerun()
+        help_button("income_sources", col_help)
         st.divider()
 
         
@@ -258,7 +262,7 @@ if __name__ == "__main__":
             index = st.session_state.editing_index
             current_item = month_budget_data[index]
 
-            st.subheader(f"Editing Budget Entry")
+            st.subheader(f"Editing Budget Bucket")
             edit_category = st.text_input("Edit Category", value=current_item["category"])
 
             current_source = current_item["income_source"]
@@ -293,7 +297,7 @@ if __name__ == "__main__":
                     st.rerun()
 
             with col_cancel:
-                if st.button("Remove Budget Category", width = "stretch", type = "primary" ):
+                if st.button("Remove Budget Bucket", width = "stretch", type = "primary" ):
                     replace_budget_entry(month_budget_data[index], None)
                     st.session_state.editing_index = None
                     st.rerun()
@@ -302,18 +306,21 @@ if __name__ == "__main__":
                 st.rerun()
 
         else:
-            table_data = [[d["category"], d["income_source"], d["planned_amount"]]
-                for d in month_budget_data]
+            st.subheader("Planned Budget Buckets")
+            st.write("")
+            table_data = [[line["category"], line["income_source"], line["planned_amount"]]
+                for line in month_budget_data]
             col_ratios = [2, 2, 2, 1]
             header_cols = st.columns(col_ratios)
             for col, header in zip(
                 header_cols, ["Category", "Income Source", "Planned Amount", "Actions"]):
                 col.markdown(f"**{header}**")
+            st.write("")
             for index, row in enumerate(table_data):
                 cols = st.columns(col_ratios)
                 cols[0].write(row[0])
                 cols[1].write(row[1])
-                cols[2].write(row[2])
+                cols[2].write(f"₱{str(row[2])}")
                 if cols[3].button("Edit", key=f"edit_btn_{index}"):
                     st.session_state.editing_index = index
                     st.rerun()
@@ -321,9 +328,9 @@ if __name__ == "__main__":
 
         if st.session_state.adding_entry and st.session_state.editing_index == None:
             st.divider()
-            st.subheader("Add New Budget Category")
+            st.subheader("Add New Budget Bucket")
 
-            add_category = st.text_input("Category Name", placeholder="e.g., Transportation")
+            add_category = st.text_input("Bucket Name", placeholder="e.g., Transportation")
             add_income_source = st.selectbox("Income Source", options = income_options, accept_new_options=True)
             add_planned_amount = st.number_input("Planned Amount", value=100.0, step=100.0)
             add_income = 100.0
@@ -350,9 +357,12 @@ if __name__ == "__main__":
 
         else:
             if st.session_state.editing_index is None:
-                if st.button("Add Category", width = "stretch"):
+                if st.button("Add Budget Bucket", width = "stretch"):
                     st.session_state.adding_entry = True
                     st.rerun()
+
+        placeholder, col_help = st.columns([10, 1])
+        help_button("budget_buckets", col_help)
 
         st.divider()
 
@@ -372,7 +382,7 @@ if __name__ == "__main__":
             st.info(f"Tip: You still have ₱{total_income - total_planned} to allocate into your budget!")
 
     else:
-        st.info(f"No budget buckets yet for {month_year}. Use default budget bucket or auto bucket?")
+        st.info(f"No budget buckets yet for {month_year}. Use default budget bucket?")
         st.write("")
         default_col, auto_col = st.columns(2)
         with default_col:
@@ -380,6 +390,9 @@ if __name__ == "__main__":
                 create_default_buckets(month_year)
                 st.rerun()
         with auto_col:
-            if st.button("Generate auto bucket", width = "stretch"):
+            amount_of_buckets = len(get_budget_months())
+            if st.button("Generate auto bucket", width = "stretch", disabled = True if amount_of_buckets < 2 else False):
                 create_auto_buckets(month_year)
                 st.rerun()
+        placeholder, col_help = st.columns([10, 1])
+        help_button("default_buckets", col_help)

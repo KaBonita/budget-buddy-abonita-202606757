@@ -127,7 +127,7 @@ if categories:
 
     st.divider()
 
-    st.subheader("Category Breakdown")
+    st.subheader("Budget Bucket Breakdown")
     st.write("")
     col_ratios = [2, 1.5, 1.5, 1.5, 3]
     header_cols = st.columns(col_ratios)
@@ -137,14 +137,14 @@ if categories:
     for index, row in enumerate(table_data):
         cols = st.columns(col_ratios)
         cols[0].write(row[0])
-        cols[1].write(row[1])
-        cols[2].write(row[2])
-        cols[3].write(row[3])
+        cols[1].write(f"₱{str(row[1])}")
+        cols[2].write(f"₱{str(row[2])}")
+        cols[3].write(f"₱{str(row[3])}")
         if row[3] < 0:
-            cols[4].warning(f"OVER BUDGET by ₱{abs(row[3])}")
+            cols[4].error(f"Over budget by ₱{abs(row[3])}")
         else:
             cols[4].success("On track")
 
     st.divider()
 else:
-    st.info("No data yet to show. Get started by establishing your budget buckets in the budget tab!")
+    st.info(f"No data yet to show for {month_year}. Get started by establishing your budget buckets in the budget tab.")
