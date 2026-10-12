@@ -1,12 +1,22 @@
+from budget_page import load_month_budget, get_total_income, get_total_planned, get_budget_categories
+from expense_page import load_month_expenses, get_total_spent
+from main import ask_month_year
+
 import streamlit as st
 import matplotlib.pyplot as plot
 import numpy as np
-from main import ask_month_year
-from main import load_month_expenses, load_month_budget
-from budget_page import get_total_income, get_total_planned, get_budget_categories
-from expense_page import get_total_spent
+
+# =============================================================================
+# DATA LOADING FUNCTIONS
+# =============================================================================
 
 def get_budget_breakdown(month_year):
+    """
+    Returns a list of lists for every budget bucket loaded in a month. Each list is in the form
+    [bucket name, planned amount, actual amount spent, budget remaining].
+
+    month_year: string of a month and a year, e.g., "January 2027"
+    """
     month_budget_data = load_month_budget(month_year)
     budget_categories = get_budget_categories(month_year)
     month_expenses = load_month_expenses(month_year)
@@ -30,6 +40,12 @@ def get_budget_breakdown(month_year):
     return budget_breakdown
     
 def get_planned_amounts(month_year):
+    """
+    Returns a list of only the planned amounts for each budget bucket loaded in
+    a month. 
+
+    month_year: string of a month and a year, e.g., "January 2027"
+    """
     budget_breakdown = get_budget_breakdown(month_year)
     planned_amounts = []
     for line in budget_breakdown:
@@ -39,6 +55,12 @@ def get_planned_amounts(month_year):
     return planned_amounts
 
 def get_actual_spent(month_year):
+    """
+    Returns a list of only the actual spent amounts for each budget bucket loaded in
+    a month. 
+
+    month_year: string of a month and a year, e.g., "January 2027"
+    """
     budget_breakdown = get_budget_breakdown(month_year)
     actual_spent = []
     for line in budget_breakdown:
@@ -47,47 +69,46 @@ def get_actual_spent(month_year):
 
     return actual_spent
 
+# =============================================================================
+# UI COMPONENT FUNCTIONS
+# =============================================================================
 
-st.subheader("Financial dashboard for:")
+def render_summary_metrics(month_year):
+    """
+    Renders the top summary metric boxes (Income, Planned, Spent, Remaining).
+    """
+    inc_col, planned_col, spen_col, remain_col = st.columns(4)
 
-month_year = ask_month_year()
+    with inc_col:
+        total_income = get_total_income(month_year)
+        st.info(f"Total Income: ₱{total_income}")
 
-st.divider()
-inc_col, planned_col, spen_col, remain_col = st.columns(4)
+    with planned_col:
+        total_planned = get_total_planned(month_year)
+        if total_planned > total_income:
+            st.warning(f"Total Planned: ₱{total_planned}")
+        else:
+            st.info(f"Total Planned: ₱{total_planned}")
 
-with inc_col:
-    total_income = get_total_income(month_year)
-    st.info(f"Total Income: ₱{total_income}")
-with planned_col:
-    total_planned = get_total_planned(month_year)
-    if total_planned > total_income:
-        st.warning(f"Total Planned: ₱{total_planned}")
-    else:
-        st.info(f"Total Planned: ₱{total_planned}")
-with spen_col:
-    total_spent = get_total_spent(month_year)
-    if total_spent > total_planned:
-        st.warning(f"Actual Spent: ₱{total_spent}")
-    else:
-        st.info(f"Actual Spent: ₱{total_spent}")
-with remain_col:
-    remaining_budget = total_income - total_spent
-    if remaining_budget < 0 :
-        st.warning(f"Remaining Budget: ₱{remaining_budget}")
-    else:
-        st.info(f"Remaining Budget: ₱{remaining_budget}")
+    with spen_col:
+        total_spent = get_total_spent(month_year)
+        if total_spent > total_planned:
+            st.warning(f"Actual Spent: ₱{total_spent}")
+        else:
+            st.info(f"Actual Spent: ₱{total_spent}")
+
+    with remain_col:
+        remaining_budget = total_income - total_spent
+        if remaining_budget < 0:
+            st.warning(f"Remaining Budget: ₱{remaining_budget}")
+        else:
+            st.info(f"Remaining Budget: ₱{remaining_budget}")
 
 
-
-st.divider()
-
-categories = get_budget_categories(month_year)
-
-planned_amounts = get_planned_amounts(month_year)
-actual_amounts = get_actual_spent(month_year)
-
-if categories:
-
+def render_visualizations(categories, planned_amounts, actual_amounts):
+    """
+    Renders the pie chart and grouped bar chart side-by-side.
+    """
     st.subheader("Visualizations")
 
     col1, col2 = st.columns(2)
@@ -102,7 +123,7 @@ if categories:
         plot.title("Budget buckets overall budget share")
         
         st.pyplot(fig_pie)
-    
+
     with col2:
         x_indices = np.arange(len(categories))
         bar_width = 0.35
@@ -123,17 +144,21 @@ if categories:
         
         st.pyplot(fig_bar)
 
-    table_data = get_budget_breakdown(month_year)
-
-    st.divider()
+def render_budget_breakdown_table(table_data):
+    """
+    Renders the detailed breakdown table per budget bucket.
+    """
 
     st.subheader("Budget Bucket Breakdown")
     st.write("")
     col_ratios = [2, 1.5, 1.5, 1.5, 3]
     header_cols = st.columns(col_ratios)
+    
     for col, header in zip(
-        header_cols, ["Category", "Planned Amount", "Actual Spending", "Remaining", "Status"]):
+        header_cols, ["Category", "Planned Amount", "Actual Spending", "Remaining", "Status"]
+    ):
         col.markdown(f"**{header}**")
+        
     for index, row in enumerate(table_data):
         cols = st.columns(col_ratios)
         cols[0].write(row[0])
@@ -145,6 +170,36 @@ if categories:
         else:
             cols[4].success("On track")
 
+
+# =============================================================================
+# MAIN DASHBOARD PAGE ROUTINE
+# =============================================================================
+
+if __name__ == "__main__":
+    st.header("Financial dashboard for")
+
+    month_year = ask_month_year()
+
+    # 1. Render summary matrix at the top of the page. 
     st.divider()
-else:
-    st.info(f"No data yet to show for {month_year}. Get started by establishing your budget buckets in the budget tab.")
+    inc_col, planned_col, spen_col, remain_col = st.columns(4)
+    render_summary_metrics(month_year)
+    st.divider()
+
+    categories = get_budget_categories(month_year)
+    planned_amounts = get_planned_amounts(month_year)
+    actual_amounts = get_actual_spent(month_year)
+
+    if categories:
+        
+        # 2. Render pie chart and bar graph visualizations.
+        render_visualizations(categories, planned_amounts, actual_amounts)
+        table_data = get_budget_breakdown(month_year)
+
+        # 3. Render budget category breakdown table.
+        st.divider()
+        render_budget_breakdown_table(table_data)
+        st.divider()
+
+    else:
+        st.info(f"No data yet to show for {month_year}. Get started by establishing your budget buckets in the budget tab.")
