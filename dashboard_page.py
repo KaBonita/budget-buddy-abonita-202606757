@@ -48,6 +48,7 @@ def get_planned_amounts(month_year):
     """
     budget_breakdown = get_budget_breakdown(month_year)
     planned_amounts = []
+
     for line in budget_breakdown:
         planned = line[1]
         planned_amounts.append(planned)
@@ -63,6 +64,7 @@ def get_actual_spent(month_year):
     """
     budget_breakdown = get_budget_breakdown(month_year)
     actual_spent = []
+
     for line in budget_breakdown:
         spent = line[2]
         actual_spent.append(spent)
@@ -85,6 +87,7 @@ def render_summary_metrics(month_year):
 
     with planned_col:
         total_planned = get_total_planned(month_year)
+
         if total_planned > total_income:
             st.warning(f"Total Planned: ₱{total_planned}")
         else:
@@ -92,6 +95,7 @@ def render_summary_metrics(month_year):
 
     with spen_col:
         total_spent = get_total_spent(month_year)
+
         if total_spent > total_planned:
             st.warning(f"Actual Spent: ₱{total_spent}")
         else:
@@ -99,6 +103,7 @@ def render_summary_metrics(month_year):
 
     with remain_col:
         remaining_budget = total_income - total_spent
+        
         if remaining_budget < 0:
             st.warning(f"Remaining Budget: ₱{remaining_budget}")
         else:
@@ -109,12 +114,11 @@ def render_visualizations(categories, planned_amounts, actual_amounts):
     """
     Renders the pie chart and grouped bar chart side-by-side.
     """
-    st.subheader("Visualizations")
-
+    st.subheader("Budget Visualizations")
     col1, col2 = st.columns(2)
     with col1:
         st.write("")
-        # Create Matplotlib Figure & Axes
+
         fig_pie, ax_pie = plot.subplots(figsize=(5, 4))
         ax_pie.pie(planned_amounts, 
             labels=categories,
@@ -154,9 +158,7 @@ def render_budget_breakdown_table(table_data):
     col_ratios = [2, 1.5, 1.5, 1.5, 3]
     header_cols = st.columns(col_ratios)
     
-    for col, header in zip(
-        header_cols, ["Category", "Planned Amount", "Actual Spending", "Remaining", "Status"]
-    ):
+    for col, header in zip(header_cols, ["Category", "Planned Amount", "Actual Spending", "Remaining", "Status"]):
         col.markdown(f"**{header}**")
         
     for index, row in enumerate(table_data):
@@ -165,6 +167,7 @@ def render_budget_breakdown_table(table_data):
         cols[1].write(f"₱{str(row[1])}")
         cols[2].write(f"₱{str(row[2])}")
         cols[3].write(f"₱{str(row[3])}")
+
         if row[3] < 0:
             cols[4].error(f"Over budget by ₱{abs(row[3])}")
         else:
@@ -180,7 +183,6 @@ if __name__ == "__main__":
 
     month_year = ask_month_year()
 
-    # 1. Render summary matrix at the top of the page. 
     st.divider()
     inc_col, planned_col, spen_col, remain_col = st.columns(4)
     render_summary_metrics(month_year)
@@ -192,11 +194,9 @@ if __name__ == "__main__":
 
     if categories:
         
-        # 2. Render pie chart and bar graph visualizations.
         render_visualizations(categories, planned_amounts, actual_amounts)
         table_data = get_budget_breakdown(month_year)
 
-        # 3. Render budget category breakdown table.
         st.divider()
         render_budget_breakdown_table(table_data)
         st.divider()

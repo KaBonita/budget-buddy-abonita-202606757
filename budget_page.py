@@ -47,6 +47,7 @@ def get_income_sources(month_year):
     """
     month_budget_data = load_month_budget(month_year)
     income_sources = []
+
     for line in month_budget_data:
         if [line["income_source"], line["income"]] not in income_sources:
             new_income_source = [line["income_source"], line["income"]]
@@ -62,6 +63,7 @@ def get_total_income(month_year):
     """
     income_sources = get_income_sources(month_year)
     total_income = 0
+
     for income_source in income_sources:
         total_income += income_source[1]
 
@@ -75,6 +77,7 @@ def get_total_planned(month_year):
     """
     month_budget_data = load_month_budget(month_year)
     total_planned = 0
+
     for line in month_budget_data:
         total_planned += line["planned_amount"]
 
@@ -107,6 +110,7 @@ def get_budget_months():
     """
     budget_data = load_budget_data()
     months = []
+
     for line in budget_data:
         month = line["month"]
         if month not in months:
@@ -147,6 +151,7 @@ def replace_budget_entry(replace_item, with_item):
     Finds the item with value replace_item in the budget file then puts with_item in its place.
     """
     budget_data = load_budget_data()
+
     if with_item:
         index = budget_data.index(replace_item)
         budget_data[index] = with_item
@@ -164,6 +169,7 @@ def replace_income_values(month_year, income_category, new_value):
     new_value: floating point number of the new value. 
     """
     budget_data = load_budget_data()
+    
     for line in budget_data:
         if line["month"] == month_year and line["income_source"] == income_category:
             line["income"] = new_value
@@ -180,10 +186,12 @@ def new_budget_entry(new_value):
     budget_data = load_budget_data()
     month_year = new_value["month"]
     r_index = 0
+
     for line in list(reversed(budget_data)):
         if line["month"] == month_year:
             break
         r_index += 1
+
     index = len(budget_data) - r_index
     budget_data.insert(index, new_value)
 
@@ -203,6 +211,7 @@ def render_income_section(month_year, income_sources):
     
     with income_source_col:
         st.markdown("**Income Source**")
+
         for line in income_sources:
             income_source = line[0]
             st.write("")
@@ -212,6 +221,7 @@ def render_income_section(month_year, income_sources):
 
     with income_col:
         st.markdown("**Expected Amount**")
+
         for income_source in income_sources:
             income_source[1] = st.number_input(
                 None, 
@@ -222,6 +232,7 @@ def render_income_section(month_year, income_sources):
 
     st.write("")
     col_save, col_help = st.columns([10, 1])
+
     with col_save:
         if income_sources:
             if st.button("Save Changes", key="Save_Income"):
@@ -245,23 +256,17 @@ def render_edit_bucket_form(month_year, month_budget_data, income_sources, incom
     edit_category = st.text_input("Edit Category", value=current_item["category"])
 
     current_source = current_item["income_source"]
-    source_index = (
-        income_options.index(current_source)
+    source_index = (income_options.index(current_source)
         if current_source in income_options
-        else 0
-    )
-    edit_income_source = st.selectbox(
-        "Edit Income Source", 
+        else 0)
+    edit_income_source = st.selectbox("Edit Income Source", 
         options=income_options, 
         index=source_index,
-        accept_new_options=True
-    )
+        accept_new_options=True)
 
-    edit_planned_amount = st.number_input(
-        "Edit Planned Amount",
+    edit_planned_amount = st.number_input("Edit Planned Amount",
         value=float(current_item["planned_amount"]),
-        step=100.0,
-    )
+        step=100.0,)
     
     col_save, col_cancel = st.columns([1, 1])
 
@@ -301,14 +306,11 @@ def render_bucket_table(month_budget_data):
     st.subheader("Planned Budget Buckets")
     st.write("")
     
-    table_data = [[line["category"], line["income_source"], line["planned_amount"]]
-        for line in month_budget_data]
+    table_data = [[line["category"], line["income_source"], line["planned_amount"]] for line in month_budget_data]
     col_ratios = [2, 2, 2, 1]
     header_cols = st.columns(col_ratios)
     
-    for col, header in zip(
-        header_cols, ["Category", "Income Source", "Planned Amount", "Actions"]
-    ):
+    for col, header in zip(header_cols, ["Category", "Income Source", "Planned Amount", "Actions"]):
         col.markdown(f"**{header}**")
         
     st.write("")
@@ -317,6 +319,7 @@ def render_bucket_table(month_budget_data):
         cols[0].write(row[0])
         cols[1].write(row[1])
         cols[2].write(f"₱{str(row[2])}")
+
         if cols[3].button("Edit", key=f"edit_btn_{index}"):
             st.session_state.editing_index = index
             st.rerun()
@@ -396,6 +399,7 @@ def render_empty_budget_state(month_year):
             
     with auto_col:
         amount_of_buckets = len(get_budget_months())
+
         if st.button("Generate auto bucket", width="stretch", disabled=True if amount_of_buckets < 2 else False):
             create_auto_buckets(month_year)
             st.rerun()
@@ -441,6 +445,7 @@ def get_highest_scored(dictionary):
     list_items = list(dictionary.keys())
     highest_scored = None
     highest_score = 0
+
     for item in list_items:
         score = dictionary[item]
         if score > highest_score:
@@ -474,8 +479,10 @@ def create_auto_buckets(month_year):
     budget_months = get_budget_months()
     distance_table = {month: budget_months.index(month) + 1 for month in budget_months}
     winning_categories = []
+
     for budget_category in budget_categories:
         score = 0
+
         for line in budget_data:
             if line["category"] == budget_category:
                 month = line["month"]
@@ -505,8 +512,10 @@ def create_auto_buckets(month_year):
         for line in budget_data:
             month = line["month"]
             distance = distance_table[month]
+
             if line["category"] == category:
                 income_source = (line["income_source"], line["income"])
+
                 if income_source not in income_sources:
                     score = 100/(distance + 1)
                     income_sources[income_source] = score
@@ -514,14 +523,17 @@ def create_auto_buckets(month_year):
                     curr_score = income_sources[income_source]
                     score = 100/(distance + 1)
                     income_sources[income_source] = curr_score + score
+
         winning_income_source = get_highest_scored(income_sources)
 
         planned_amounts = {}
         for line in budget_data:
             month = line["month"]
             distance = distance_table[month]
+
             if line["category"] == category:
                 planned_amount = line["planned_amount"]
+
                 if planned_amount not in planned_amounts:
                     score = 100/(distance + 1)
                     planned_amounts[planned_amount] = score
@@ -529,6 +541,7 @@ def create_auto_buckets(month_year):
                     curr_score = planned_amounts[planned_amount]
                     score = 100/(distance + 1)
                     planned_amounts[planned_amount] = curr_score + score
+
         winning_planned_amount = get_highest_scored(planned_amounts)
 
         new_item = {"month": month_year,
@@ -574,13 +587,13 @@ if __name__ == "__main__":
 
         income_options = [income_source[0] for income_source in income_sources]
 
-        # 3. Edit Form OR Table Display
+        # 3. Edit Form or Table Display
         if st.session_state.editing_index is not None:
             render_edit_bucket_form(month_year, month_budget_data, income_sources, income_options)
         else:
             render_bucket_table(month_budget_data)
 
-        # 4. Add Entry Form OR Add Button Controls
+        # 4. Add Entry Form or Add Button Controls
         if st.session_state.adding_entry and st.session_state.editing_index is None:
             render_add_bucket_form(month_year, income_sources, income_options)
         else:

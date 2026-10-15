@@ -104,11 +104,13 @@ def new_expense_entry(new_value):
     month_year = new_value["month"]
     r_index = 0
     entry_day = int(new_value["date"][8:10])
+
     for line in list(reversed(expense_data)):
         if line["month"] == month_year:
             break
         r_index += 1
     index = len(expense_data) - r_index
+
     if expense_data[index-1]["month"] == month_year and entry_day < int(expense_data[index-1]["date"][8:10]):
         index -= 1
     
@@ -130,9 +132,7 @@ def render_expense_history_table(month_year, table_data):
         col_ratios = [1.5, 2, 3, 2]
         header_cols = st.columns(col_ratios)
         
-        for col, header in zip(
-            header_cols, ["Date", "Category", "Description", "Amount"]
-        ):
+        for col, header in zip(header_cols, ["Date", "Category", "Description", "Amount"]):
             col.markdown(f"**{header}**")
             
         for index, row in enumerate(table_data):
