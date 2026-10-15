@@ -111,8 +111,11 @@ def new_expense_entry(new_value):
         r_index += 1
     index = len(expense_data) - r_index
 
-    if expense_data[index-1]["month"] == month_year and entry_day < int(expense_data[index-1]["date"][8:10]):
-        index -= 1
+    try:
+        if expense_data[index-1]["month"] == month_year and entry_day < int(expense_data[index-1]["date"][8:10]):
+            index -= 1
+    except IndexError:
+        index = 0
     
     expense_data.insert(index, new_value)
 
