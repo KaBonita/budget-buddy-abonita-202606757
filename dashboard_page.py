@@ -124,6 +124,7 @@ def render_visualizations(categories, planned_amounts, actual_amounts):
             labels=categories,
             autopct="%1.1f%%",)
         ax_pie.axis("equal")
+
         plot.title("Budget buckets overall budget share")
         
         st.pyplot(fig_pie)
@@ -142,6 +143,7 @@ def render_visualizations(categories, planned_amounts, actual_amounts):
         ax_bar.set_xticks(x_indices)
         ax_bar.set_xticklabels(categories, rotation=45, ha="right")
         ax_bar.legend()
+        
         plot.tight_layout()
 
         plot.title("Planned vs Actual Spending")

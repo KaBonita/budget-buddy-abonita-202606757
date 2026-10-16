@@ -135,7 +135,7 @@ def render_expense_history_table(month_year, table_data):
         col_ratios = [1.5, 2, 3, 2]
         header_cols = st.columns(col_ratios)
         
-        for col, header in zip(header_cols, ["Date", "Category", "Description", "Amount"]):
+        for col, header in zip(header_cols, ["Date", "Bucket", "Description", "Amount"]):
             col.markdown(f"**{header}**")
             
         for index, row in enumerate(table_data):
@@ -149,21 +149,15 @@ def render_expense_history_table(month_year, table_data):
     else:
         st.info(f"You currently have no logged expenses for {month_year}. Log one?")
 
-
-# =============================================================================
-# UI COMPONENT FUNCTIONS
-# =============================================================================
-
 def render_add_expense_form(month_year):
     """
     Renders the form used to log a new expense entry.
     """
-    st.divider()
     st.subheader("Log new expense")
 
     expense_date = str(st.date_input("Expense made on:"))
     budget_categories = get_budget_categories(month_year)
-    category = st.selectbox("In Budget Category", options=budget_categories)
+    category = st.selectbox("In Budget Bucket", options=budget_categories)
     description = st.text_input("Description:", 
         placeholder="Write a short description of the expense")
     amount = st.number_input("Amount", step=10.0, value=10.0)
@@ -185,6 +179,8 @@ def render_add_expense_form(month_year):
     if col_add_cancel.button("Cancel", width="stretch"):
         st.session_state.adding_entry = False
         st.rerun()
+
+    st.divider()
 
 
 # =============================================================================
