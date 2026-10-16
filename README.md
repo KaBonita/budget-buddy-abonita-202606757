@@ -9,7 +9,7 @@ monthly overviews for your budget and expenses!
 
 These overviews can help you track where you commonly overspend, your budget
 category allocations, income breakdowns, and more. In turn, helping you effectively 
-managw your budget!
+manage your budget!
 
 
 
